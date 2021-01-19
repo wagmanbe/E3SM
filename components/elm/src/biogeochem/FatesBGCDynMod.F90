@@ -61,7 +61,8 @@ contains
       use CNDecompCascadeConType , only : decomp_cascade_con
       use ELMFatesInterfaceMod   , only : hlm_fates_interface_type
       use CropType               , only : crop_type
-
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      use clm_time_manager   , only : get_step_size
     !
     ! !ARGUMENTS:
     type(bounds_type)         , intent(in)    :: bounds  
@@ -94,6 +95,8 @@ contains
           1:nlevdecomp,1:ndecomp_cascade_transitions)       !potential C loss from one pool to another
     ! For methane code
     real(r8):: hrsum(bounds%begc:bounds%endc,1:nlevdecomp)  !sum of HR (gC/m2/s)
+
+    real(r8) :: dt 
     !-----------------------------------------------------------------------
 
     associate( &
@@ -245,9 +248,9 @@ contains
     call alm_fates%UpdateLitterFluxes(bounds,carbonflux_vars)
 
     ! Update all prognostic carbon state variables (except for gap-phase mortality and fire fluxes)
-
+    dt = real(get_step_size(), r8) 
     call CarbonStateUpdate1(bounds, num_soilc, filter_soilc, num_soilp, filter_soilp, &
-            crop_vars, col_cs, veg_cs, col_cf, veg_cf)
+            crop_vars, col_cs, veg_cs, col_cf, veg_cf, dt )
 
     call t_stopf('BNGCUpdate1')
 

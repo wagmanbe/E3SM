@@ -545,6 +545,8 @@ contains
 !    use AllocationMod        , only: cnallocation
     use SoilLittDecompMod            , only: SoilLittDecompAlloc
     use SoilLittDecompMod            , only: SoilLittDecompAlloc2 !after SoilLittDecompAlloc
+
+    use clm_time_manager  , only : get_step_size 
     !
     ! !ARGUMENTS:
     type(bounds_type)        , intent(in)    :: bounds
@@ -579,7 +581,8 @@ contains
     type(phosphorusflux_type)  , intent(inout) :: phosphorusflux_vars
     type(phosphorusstate_type) , intent(inout) :: phosphorusstate_vars
     type(sedflux_type)       , intent(in)    :: sedflux_vars
-
+    
+    real(r8) :: dt 
     !-----------------------------------------------------------------------
 
     ! Call the main CN routines
@@ -665,14 +668,14 @@ contains
        !--------------------------------------------
        ! CNUpdate0
        !--------------------------------------------
-
+        dt = real(get_step_size(), r8) 
        call t_startf('CNUpdate0')
-       call CarbonStateUpdate0(num_soilp, filter_soilp, veg_cs, veg_cf)
+       call CarbonStateUpdate0(num_soilp, filter_soilp,veg_cs,veg_cf, dt)
        if ( use_c13 ) then
-          call CarbonStateUpdate0(num_soilp, filter_soilp, c13_veg_cs, c13_veg_cf)
+          call CarbonStateUpdate0(num_soilp, filter_soilp,veg_cs,veg_cf, dt)
        end if
        if ( use_c14 ) then
-          call CarbonStateUpdate0(num_soilp, filter_soilp, c14_veg_cs, c14_veg_cf)
+          call CarbonStateUpdate0(num_soilp, filter_soilp,veg_cs,veg_cf ,dt)
        end if
        call t_stopf('CNUpdate0')
 
@@ -713,22 +716,22 @@ contains
        end if
 
        call CarbonStateUpdate1(bounds, num_soilc, filter_soilc, num_soilp, filter_soilp, &
-            crop_vars, col_cs, veg_cs, col_cf, veg_cf)
+            crop_vars, col_cs, veg_cs, col_cf, veg_cf,dt)
 
        if ( use_c13 ) then
           call CarbonStateUpdate1(bounds, num_soilc, filter_soilc, num_soilp, filter_soilp, &
-               crop_vars, c13_col_cs, c13_veg_cs, c13_col_cf, c13_veg_cf)
+               crop_vars, c13_col_cs, c13_veg_cs, c13_col_cf, c13_veg_cf,dt)
        end if
        if ( use_c14 ) then
           call CarbonStateUpdate1(bounds, num_soilc, filter_soilc, num_soilp, filter_soilp, &
-               crop_vars, c14_col_cs, c14_veg_cs, c14_col_cf, c14_veg_cf)
+               crop_vars, c14_col_cs, c14_veg_cs, c14_col_cf, c14_veg_cf,dt)
        end if
 
        call NitrogenStateUpdate1(num_soilc, filter_soilc, num_soilp, filter_soilp, &
-            cnstate_vars, nitrogenflux_vars, nitrogenstate_vars)
+            cnstate_vars, dt)
 
        call PhosphorusStateUpdate1(num_soilc, filter_soilc, num_soilp, filter_soilp, &
-            cnstate_vars, phosphorusflux_vars, phosphorusstate_vars)
+            cnstate_vars, dt)
 
        call t_stopf('CNUpdate1')
 

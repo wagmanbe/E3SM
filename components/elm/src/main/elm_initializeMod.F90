@@ -701,7 +701,7 @@ contains
           call restFile_read(bounds_proc, fnamer,                                             &
                atm2lnd_vars, aerosol_vars, canopystate_vars, cnstate_vars,                    &
                carbonstate_vars, c13_carbonstate_vars, c14_carbonstate_vars, carbonflux_vars, &
-               ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars,        &
+               ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars, lakebgc_vars,     &
                nitrogenstate_vars, nitrogenflux_vars, photosyns_vars, soilhydrology_vars,     &
                soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
                waterflux_vars, waterstate_vars, sedflux_vars,                                 &
@@ -717,7 +717,7 @@ contains
        call restFile_read(bounds_proc, fnamer,                                             &
             atm2lnd_vars, aerosol_vars, canopystate_vars, cnstate_vars,                    &
             carbonstate_vars, c13_carbonstate_vars, c14_carbonstate_vars, carbonflux_vars, &
-            ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars,        &
+            ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars, lakebgc_vars,     &
             nitrogenstate_vars, nitrogenflux_vars, photosyns_vars, soilhydrology_vars,     &
             soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
             waterflux_vars, waterstate_vars, sedflux_vars,                                 &
@@ -753,7 +753,7 @@ contains
        call restFile_write(bounds_proc, finidat_interp_dest,                               &
             atm2lnd_vars, aerosol_vars, canopystate_vars, cnstate_vars,                    &
             carbonstate_vars, c13_carbonstate_vars, c14_carbonstate_vars, carbonflux_vars, &
-            ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars,        &
+            ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars, lakebgc_vars,     &
             nitrogenstate_vars, nitrogenflux_vars, photosyns_vars, soilhydrology_vars,     &
             soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
             waterflux_vars, waterstate_vars, sedflux_vars,                                 &
@@ -769,7 +769,7 @@ contains
        call restFile_read(bounds_proc, finidat_interp_dest,                                &
             atm2lnd_vars, aerosol_vars, canopystate_vars, cnstate_vars,                    &
             carbonstate_vars, c13_carbonstate_vars, c14_carbonstate_vars, carbonflux_vars, &
-            ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars,        &
+            ch4_vars, energyflux_vars, frictionvel_vars, lakestate_vars, lakebgc_vars,     &
             nitrogenstate_vars, nitrogenflux_vars, photosyns_vars, soilhydrology_vars,     &
             soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
             waterflux_vars, waterstate_vars, sedflux_vars,                                 &

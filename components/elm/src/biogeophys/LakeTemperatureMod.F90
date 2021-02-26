@@ -11,7 +11,6 @@ module LakeTemperatureMod
   use shr_kind_mod      , only : r8 => shr_kind_r8
   use shr_log_mod       , only : errMsg => shr_log_errMsg
   use decompMod         , only : bounds_type
-  use CH4Mod            , only : ch4_type
   use EnergyFluxType    , only : energyflux_type
   use LakeStateType     , only : lakestate_type
   use SoilStateType     , only : soilstate_type
@@ -41,7 +40,7 @@ contains
 
   !-----------------------------------------------------------------------
   subroutine LakeTemperature(bounds, num_lakec, filter_lakec, num_lakep, filter_lakep, &
-       solarabs_vars, soilstate_vars, waterstate_vars, waterflux_vars, ch4_vars, &
+       solarabs_vars, soilstate_vars, waterstate_vars, waterflux_vars, &
        energyflux_vars, temperature_vars, lakestate_vars)
     !
     ! !DESCRIPTION:
@@ -116,7 +115,7 @@ contains
     use clm_time_manager   , only : get_step_size
     use elm_varcon         , only : hfus, cpliq, cpice, tkwat, tkice, denice
     use elm_varcon         , only : vkc, grav, denh2o, tfrz, cnfac
-    use elm_varctl         , only : iulog, use_lch4
+    use elm_varctl         , only : iulog
     !
     ! !ARGUMENTS:
     type(bounds_type)      , intent(in)    :: bounds	  
@@ -128,7 +127,6 @@ contains
     type(soilstate_type)   , intent(in)    :: soilstate_vars
     type(waterstate_type)  , intent(inout) :: waterstate_vars
     type(waterflux_type)   , intent(inout) :: waterflux_vars
-    type(ch4_type)         , intent(inout) :: ch4_vars
     type(energyflux_type)  , intent(inout) :: energyflux_vars
     type(temperature_type) , intent(inout) :: temperature_vars
     type(lakestate_type)   , intent(inout) :: lakestate_vars
@@ -254,9 +252,8 @@ contains
          lake_icefrac    =>   lakestate_vars%lake_icefrac_col      , & ! Output: [real(r8) (:,:) ]  col mass fraction of lake layer that is frozen
          lake_icethick   =>   lakestate_vars%lake_icethick_col     , & ! Output: [real(r8) (:)   ]  col ice thickness (m) (integrated if lakepuddling)
          savedtke1       =>   lakestate_vars%savedtke1_col         , & ! Output: [real(r8) (:)   ]  col top level eddy conductivity (W/mK)      
-         lakeresist      =>   lakestate_vars%lakeresist_col        , & ! Output: [real(r8) (:)   ]  col (Needed for calc. of grnd_ch4_cond) (s/m) 
-
-         grnd_ch4_cond   =>   ch4_vars%grnd_ch4_cond_col           , & ! Output: [real(r8) (:)   ]  tracer conductance for boundary layer [m/s] (only over lake points)
+         lake_kme        =>   lakestate_vars%lake_kme_col          , & ! Output: [real(r8) (:,:) ]  col molecular + eddy diffusion coefficient (m**2/s) 
+         lake_fsds_vis   =>   lakestate_vars%lake_fsds_vis_col     , & ! Output: [real(r8) (:,:) ]  col incident vis radiation (W/m^2)
 
          eflx_soil_grnd  =>   veg_ef%eflx_soil_grnd , & ! Output: [real(r8) (:)   ]  heat flux into snow / lake (W/m**2) [+ = into soil]
          eflx_sh_grnd    =>   veg_ef%eflx_sh_grnd   , & ! Output: [real(r8) (:)   ]  sensible heat flux from ground (W/m**2) [+ to atm]
@@ -295,11 +292,8 @@ contains
        esum2(c) = 0._r8
        hc_soisno(c) = 0._r8
        hc_soi(c)    = 0._r8
-       if (use_lch4) then
-          jconvect(c) = 0
-          jconvectbot(c) = nlevlak+1
-          lakeresist(c) = 0._r8
-       end if
+       jconvect(c) = 0
+       jconvectbot(c) = nlevlak+1
        bottomconvect(bounds%begc:bounds%endc) = .false.
 
        qflx_snofrz_col(c) = 0._r8
@@ -403,6 +397,8 @@ contains
              if (lakepuddling) frzn(c) = .true.
                 ! Prevent eddy mixing beneath frozen layers even when surface is unfrozen.
           end if
+            
+          lake_kme(c,j) = kme(c,j)
        end do
     end do
 
@@ -411,6 +407,7 @@ contains
 
        j = nlevlak
        kme(c,nlevlak) = kme(c,nlevlak-1)
+       lake_kme(c,nlevlak) = kme(c,nlevlak)
 
        if (t_grnd(c) > tfrz .and. t_lake(c,1) > tfrz .and. snl(c) == 0 .and. &
            (.not. lakepuddling .or. (lake_icefrac(c,j) == 0._r8 .and. .not. frzn(c)) ) ) then
@@ -458,19 +455,23 @@ contains
 
           if (t_grnd(c) > tfrz .and. t_lake(c,1) > tfrz .and. snl(c) == 0) then
              phidum = (rsfin-rsfout) * sabg(p) * (1._r8-beta(c))
+             lake_fsds_vis(c,j) = rsfin * sabg(p) * (1._r8-beta(c)) 
              if (j == nlevlak) then
                 phi_soil(c) = rsfout * sabg(p) * (1._r8-beta(c))
              end if
           else if (j == 1 .and. snl(c) == 0) then !if frozen but no snow layers
              phidum = sabg(p) * (1._r8-beta(c))
+             lake_fsds_vis(c,j) = sabg(p) * (1._r8-beta(c))
              ! This should be improved upon; Mironov 2002 suggests that SW can penetrate thin ice and may
              ! cause spring convection.
           else if (j == 1) then
              phidum = sabg_lyr(p,j)
+             lake_fsds_vis(c,j) = sabg_lyr(p,j)
           !some radiation absorbed in snow layers, the rest in the top layer of lake
           !radiation absorbed in snow layers will be applied below
           else
              phidum = 0._r8
+             lake_fsds_vis(c,j) = 0._r8
              if (j == nlevlak) phi_soil(c) = 0._r8
           end if
           phi(c,j) = phidum
@@ -495,6 +496,13 @@ contains
          cv(bounds%begc:bounds%endc, :), &
          tktopsoillay(bounds%begc:bounds%endc), &
          soilstate_vars, waterstate_vars, temperature_vars)
+
+    do j = 1, nlevgrnd
+       do fc = 1, num_lakec
+          c = filter_lakec(fc)
+          lake_kme(c,j+nlevlak) = tk(c,j) / cv(c,j) / dz(c,j)
+       end do
+    end do
     
     ! Sum cv*t_lake for energy check
     ! Include latent heat term, and use tfrz as reference temperature
@@ -783,9 +791,7 @@ contains
                 !tav(c) = tav(c) + t_lake(c,i)*dz_lake(c,i)
                 iceav(c) = iceav(c) + lake_icefrac(c,i)*dz_lake(c,i)
                 nav(c) = nav(c) + dz_lake(c,i)
-                if (use_lch4) then
-                   jconvect(c) = j+1
-                end if
+                jconvect(c) = j+1
              end if
           end do
        end do
@@ -880,9 +886,7 @@ contains
                 !tav(c) = tav(c) + t_lake(c,i)*dz_lake(c,i)
                 iceav(c) = iceav(c) + lake_icefrac(c,i)*dz_lake(c,i)
                 nav(c) = nav(c) + dz_lake(c,i)
-                if (use_lch4) then
-                   jconvectbot(c) = j
-                end if
+                jconvectbot(c) = j
              end if
           end do
        end do
@@ -945,32 +949,6 @@ contains
           end do
        end do
     end do
-
-    ! Calculate lakeresist and grnd_ch4_cond for CH4 Module
-    ! The CH4 will diffuse directly from the top soil layer to the atmosphere, so 
-    ! the whole lake resistance is included.
-
-    if (use_lch4) then
-       do j = 1, nlevlak
-          do fc = 1, num_lakec
-             c = filter_lakec(fc)
-
-             if (j > jconvect(c) .and. j < jconvectbot(c)) then  ! Assume resistance is zero for levels that convect
-                lakeresist(c) = lakeresist(c) + dz(c,j)/kme(c,j) ! dz/eddy or molecular diffusivity
-             end if
-
-             if (j == nlevlak) then ! Calculate grnd_ch4_cond
-                grnd_ch4_cond(c) = 1._r8 / (lakeresist(c) + lake_raw(c))
-
-                ! Lake water R +  aerodynamic R
-                ! Snow will be considered in methane routine
-                ! No methane conduction through frozen lake
-                if (lake_icefrac(c,1) > 0.1_r8) grnd_ch4_cond(c) = 0._r8
-             end if
-
-          end do
-       end do
-    end if
 
     !!!!!!!!!!!!!!!!!!!!!!!
     ! 11!) Re-evaluate thermal properties and sum energy content.

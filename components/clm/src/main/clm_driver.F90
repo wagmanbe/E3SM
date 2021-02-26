@@ -164,7 +164,7 @@ module clm_driver
   use NitrifDenitrifMod        , only : NitrifDenitrifParamsInst
   use SoilLittDecompMod        , only : cndecompparamsinst
   use AllocationMod            , only : AllocParamsInst
-  use LandunitDataType         , only : lun_ef, lun_es, lun_ws, lun_wf
+  use LandunitDataType         , only : lun_ef, lun_es, lun_ws
   use glc2lndMod                , only : glc2lnd_vars_update_glc2lnd_acc
 
 
@@ -214,7 +214,9 @@ module clm_driver
   use dynPriorWeightsMod , only : set_prior_weights_acc
   use dynPatchStateUpdaterMod  , only : patch_state_set_old_weights_acc
   use dynColumnStateUpdaterMod , only : column_state_set_old_weights_acc
+#ifdef CPL_BYPASS
   use ForcingUpdateMod         , only : update_forcings_CPLBYPASS
+#endif
   use clm_varctl
 
   !
@@ -482,10 +484,12 @@ contains
     do nc = 1, nclumps
       call get_clump_bounds_gpu(nc, bounds_clump)
       !
+#ifdef CPL_BYPASS
       if (nstep_mod > 1) then
         call update_forcings_CPLBYPASS(bounds_clump, atm2lnd_vars, int(dtime_mod),&
                   thiscalday_mod, secs_curr, year_curr, mon_curr, nstep_mod)
       end if
+#endif
        ! ==================================================================================
        ! Determine decomp vertical profiles
        !
@@ -1328,7 +1332,7 @@ end do
         call set_gpu_tape()
         call t_stopf('clm_drv_io_htapes')
        ! Write restart/initial files if appropriate
-       if (0) then
+       if (rstwr) then
           call t_startf('clm_drv_io_wrest')
           filer = restFile_filename(rdate=rdate)
           print *, "Copying out data for restart"

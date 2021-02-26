@@ -740,9 +740,11 @@ end subroutine hist_update_hbuf_field_1d_gpu
        end select
     end if
 
+#if 0
     if (field_allocated) then
        deallocate(field)
     end if
+#endif
   end associate
   end subroutine hist_update_hbuf_field_2d_gpu
 

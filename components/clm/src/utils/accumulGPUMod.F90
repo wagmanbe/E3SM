@@ -1,7 +1,7 @@
 module accumulGPUMod
 
   !module that contains the class methods needed to update accumulators
-  use accumulMod       , only : accum_type, accumResetVal, naccflds
+  use accumulMod       , only : accumResetVal, naccflds
   use shr_kind_mod     , only : r8 => shr_kind_r8
   use atm2lndType      , only : atm2lnd_type
   use TopounitDataType , only : topounit_atmospheric_flux
@@ -15,6 +15,8 @@ module accumulGPUMod
   use GridcellType      , only : grc_pp
   use clm_varpar        , only : crop_prog
   use clm_varcon        , only : spval
+  use clm_varctl        , only : use_cn, use_fates
+
 
   type accum_field_gpu_type
      character(len=  8), pointer :: name    => null()  !field name

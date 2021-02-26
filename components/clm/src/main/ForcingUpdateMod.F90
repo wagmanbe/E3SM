@@ -51,6 +51,7 @@ contains
     esati= 100._r8*(b0+t*(b1+t*(b2+t*(b3+t*(b4+t*(b5+t*b6))))))
   end function esati
 
+#ifdef CPL_BYPASS
   subroutine update_forcings_CPLBYPASS(bounds, atm2lnd_vars, dtime, thiscalday, &
     tod, yr, mon, nstep)
     !$acc routine seq
@@ -85,7 +86,8 @@ contains
     associate(  &
       tindex => atm2lnd_vars%tindex  &
       )
-    do g = bounds%begg,bounds%endg
+
+     do g = bounds%begg,bounds%endg
        i = 1 + (g - bounds%begg)
        !!
        do v=1,met_nvars
@@ -426,12 +428,12 @@ contains
        end if
      end do
 
-
    end do
 
-    end associate
+  end associate
 
   end subroutine update_forcings_CPLBYPASS
+#endif
 
   real(r8) function szenith(xcoor, ycoor, ltm, jday, hr, min, offset)
     !Function to calcualte solar zenith angle

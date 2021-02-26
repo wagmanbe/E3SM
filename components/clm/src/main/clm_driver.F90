@@ -193,7 +193,9 @@ module clm_driver
   use decompMod                   , only : clumps, procinfo
   use domainMod                   , only : ldomain
   use update_accMod
+#if _CUDA
   use cudafor
+#endif
   use Method_procs_acc
   use histGPUMod
   use NitrogenDynamicsMod, only : CNNDynamicsParamsInst
@@ -269,10 +271,10 @@ contains
     integer :: k_frz
     real*8    :: sto, declin, declinp1
     integer , parameter :: gpu = 1, numdays = 1
-    #if _CUDA
+#if _CUDA
     integer(kind=cuda_count_kind) :: heapsize,free1,free2,total
     integer  :: istat, val
-    #endif
+#endif
     !-----------------------------------------------------------------------
     call get_curr_time_string(dateTimeString)
     if (masterproc) then
@@ -286,7 +288,7 @@ contains
         idle = idle + 0
         call sleep(1)
     end do
-    #if _CUDA
+#if _CUDA
     istat = cudaDeviceGetLimit(heapsize, cudaLimitMallocHeapSize)
     print *, "SETTING Heap Limit from", heapsize
     heapsize = 189_8*1024_8*1024_8
@@ -294,7 +296,7 @@ contains
     istat = cudaDeviceSetLimit(cudaLimitMallocHeapSize,heapsize)
     istat = cudaMemGetInfo(free1, total)
     print *, "Free1:",free1
-    #endif
+#endif
     ! Determine processor bounds and clumps for this processor
     call get_proc_bounds(bounds_proc)
     nclumps = get_proc_clumps()
@@ -428,12 +430,12 @@ contains
         !$acc enter data copyin(tape_gpu,clmptr_ra,clmptr_rs)
         !$acc enter data copyin( doalb, declinp1, declin )
 
-        #if _CUDA
+#if _CUDA
               istat = cudaMemGetInfo(free2, total)
               print *, "Transferred:", free1-free2
               print *, "Total:",total
               print *, "Free:", free2
-        #endif
+#endif
       end if
 
     if (do_budgets) call WaterBudget_Reset()
@@ -1282,20 +1284,20 @@ end do
     !!call write_diagnostic(bounds_proc, wrtdia, nstep_mod, lnd2atm_vars)
     !!call t_stopf('wrtdiag')
 
-        #if _CUDA
+#if _CUDA
               istat = cudaMemGetInfo(free2, total)
               print *, "Total:",total/10.E+9
               print *, "Free:", free2/10.E+9
-        #endif
+#endif
     ! ============================================================================
     ! Update history buffer
     ! ============================================================================
-        #if _CUDA
+#if _CUDA
         if(step_count == 24) then
                 call cudaProfilerStop()
                 stop
         end if
-        #endif
+#endif
     ! ============================================================================
     ! Compute water budget
     ! ============================================================================

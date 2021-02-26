@@ -509,11 +509,11 @@ contains
        !
        ! Create l2x_l export state - add river runoff input to l2x_l if appropriate
        !
-       #ifndef CPL_BYPASS
+#ifndef CPL_BYPASS
         call t_startf ('lc_lnd_export')
         call lnd_export(bounds, lnd2atm_vars, lnd2glc_vars, l2x_l%rattr)
         call t_stopf ('lc_lnd_export')
-       #endif
+#endif
         
        ! Advance clm time step
 

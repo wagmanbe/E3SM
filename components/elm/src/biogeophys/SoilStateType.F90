@@ -85,6 +85,10 @@ module SoilStateType
      real(r8), pointer :: root_conductance_patch(:,:) ! patch root conductance [mm/s]
      real(r8), pointer :: soil_conductance_patch(:,:) ! patch soil conductance [mm/s]
 
+     ! soil erosion
+     real(r8), pointer :: tillage_col          (:)    ! col soil tillage fraction 
+     real(r8), pointer :: litho_col            (:)    ! col soil lithology erodiblity index
+
    contains
 
      procedure, public  :: Init
@@ -182,6 +186,9 @@ contains
     allocate(this%k_soil_root_patch    (begp:endp,1:nlevsoi))           ; this%k_soil_root_patch (:,:) = nan
     allocate(this%root_conductance_patch(begp:endp,1:nlevsoi))          ; this%root_conductance_patch (:,:) = nan
     allocate(this%soil_conductance_patch(begp:endp,1:nlevsoi))          ; this%soil_conductance_patch (:,:) = nan
+
+    allocate(this%tillage_col          (begc:endc))                     ; this%tillage_col          (:)   = nan
+    allocate(this%litho_col            (begc:endc))                     ; this%litho_col            (:)   = nan
 
   end subroutine InitAllocate
 
@@ -364,6 +371,8 @@ contains
     real(r8) ,pointer  :: clay3d (:,:)                  ! read in - soil texture: percent clay (needs to be a pointer for use in ncdio)
     real(r8) ,pointer  :: grvl3d (:,:)                  ! read in - soil texture: percent gravel (needs to be a pointer for use in ncdio)
     real(r8) ,pointer  :: organic3d (:,:)               ! read in - organic matter: kg/m3 (needs to be a pointer for use in ncdio)
+    real(r8) ,pointer  :: tillage_in (:)                ! read in - conserved tillage fraction
+    real(r8) ,pointer  :: litho_in (:)                  ! read in - lithology erodibility index
     character(len=256) :: locfn                         ! local filename
     integer            :: nlevbed                       ! # of layers above bedrock
     integer            :: ipedof  
@@ -502,6 +511,28 @@ contains
        this%wtfact_col(c) = gti(g)
     end do
     deallocate(gti)
+
+    ! Read tillage and lithology
+    allocate(tillage_in(bounds%begg:bounds%endg))
+    allocate(litho_in(bounds%begg:bounds%endg))
+    if (use_erosion) then
+       call ncd_io(ncid=ncid, varname='Tillage', flag='read', data=tillage_in, dim1name=grlnd, readvar=readvar)
+       if (.not. readvar) then
+          call endrun(msg=' ERROR: Tillage NOT on surfdata file'//errMsg(__FILE__, __LINE__))
+       end if
+      
+       call ncd_io(ncid=ncid, varname='Litho', flag='read', data=litho_in, dim1name=grlnd, readvar=readvar)
+       if (.not. readvar) then
+          call endrun(msg=' ERROR: litho NOT on surfdata file'//errMsg(__FILE__, __LINE__))
+       end if
+
+       do c = bounds%begc, bounds%endc
+          g = col_pp%gridcell(c)
+          this%tillage_col(c) = tillage_in(g)
+          this%litho_col(c) = litho_in(g)
+       end do
+    end if
+    deallocate(tillage_in, litho_in)
 
     ! Close file
 

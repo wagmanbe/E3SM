@@ -662,6 +662,10 @@ end function radiation_nextsw_cday
                        sampling_seq='rad_lwsw', flag_xyfill=.true., &
                        standard_name='toa_shortwave_cloud_radiative_effect')
 
+         if (spectralflux) then 
+            call addfld('SU'//diag(icall), (/ 'ilev','pver','nswbands' /), 'D', 'W/m2', & 'Shortwave spectral flux up', sampling_seq='rad_lwsw', flag_xyfill=.true.) 
+         end if
+
           if (history_amwg) then
              call add_default('SOLIN'//diag(icall),   1, ' ')
              call add_default('QRS'//diag(icall),     1, ' ')
@@ -1372,6 +1376,10 @@ end function radiation_nextsw_cday
                   call outfld('FSN200'//diag(icall),fsn200,pcols,lchnk)
                   call outfld('FSN200C'//diag(icall),fsn200c,pcols,lchnk)
                   call outfld('SWCF'//diag(icall),swcf  ,pcols,lchnk)
+                  
+                  if (spectralflux) then ! Tried lowercase su. This failed during run. Now try upper case. If not, try adding to addfld. 
+                     call outfld('SU'//diag(icall),SU, pcols,lchnk) ! Might need to add pver, ftem, or both and the bands themselves.
+                  end if 
 
               end if ! (active_calls(icall))
           end do ! icall

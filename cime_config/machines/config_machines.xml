@@ -2476,7 +2476,7 @@ commented out until "*** No rule to make target '.../libadios2pio-nm-lib.a'" iss
         <command name="load">sems-archive-netcdf/4.4.1/exo</command>
       </modules>
     </module_system>
-    <RUNDIR>/nscratch/$USER/acme_scratch/flight/$CASE/run</RUNDIR>
+    <RUNDIR>/tscratch/$USER/acme_scratch/flight/$CASE/run</RUNDIR>
     <EXEROOT>$CIME_OUTPUT_ROOT/$CASE/bld</EXEROOT>
     <!-- complete path to a short term archiving directory -->
     <!-- path to the cprnc tool used to compare netcdf history files in testing -->

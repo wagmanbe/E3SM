@@ -671,6 +671,12 @@ end function radiation_nextsw_cday
                     'Shortwave spectral flux up band '//trim(fieldname), &
                     sampling_seq='rad_lwsw', flag_xyfill=.true.)
             end do
+            do lw = 1, nswbands
+               write(fieldname,'(a,i2.2)') 'SD_band', lw
+               call addfld(trim(fieldname)//diag(icall), (/ 'ilev' /), 'A', 'W/m2', &
+                    'Shortwave spectral flux down band '//trim(fieldname), &
+                    sampling_seq='rad_lwsw', flag_xyfill=.true.)
+            end do
          end if
 
           if (history_amwg) then
@@ -1389,6 +1395,10 @@ end function radiation_nextsw_cday
                   if (spectralflux) then
                      do lw = 1, nswbands
                         write(fieldname,'(a,i2.2)') 'SU_band', lw
+                        call outfld(trim(fieldname)//diag(icall), su(:,:,lw), pcols, lchnk)
+                     end do
+                     do lw = 1, nswbands
+                        write(fieldname,'(a,i2.2)') 'SD_band', lw
                         call outfld(trim(fieldname)//diag(icall), su(:,:,lw), pcols, lchnk)
                      end do
                   end if

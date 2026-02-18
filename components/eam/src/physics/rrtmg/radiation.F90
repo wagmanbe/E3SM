@@ -415,6 +415,8 @@ end function radiation_nextsw_cday
     integer :: err
 
     integer :: dtime
+    integer :: lw
+    character(len=32) :: fieldname
 
     !variables for pergro_mods
     character (len=250) :: errstr
@@ -662,9 +664,13 @@ end function radiation_nextsw_cday
                        sampling_seq='rad_lwsw', flag_xyfill=.true., &
                        standard_name='toa_shortwave_cloud_radiative_effect')
 
-         if (spectralflux) then 
-            call addfld('SU'//diag(icall), (/ 'ilev','nswbands' /), 'A', 'W/m2', & 
-            'Shortwave spectral flux up', sampling_seq='rad_lwsw', flag_xyfill=.true.) 
+         if (spectralflux) then
+            do lw = 1, nswbands
+               write(fieldname,'(a,i2.2)') 'SU_band', lw
+               call addfld(trim(fieldname)//diag(icall), (/ 'ilev' /), 'A', 'W/m2', &
+                    'Shortwave spectral flux up band '//trim(fieldname), &
+                    sampling_seq='rad_lwsw', flag_xyfill=.true.)
+            end do
          end if
 
           if (history_amwg) then
@@ -862,7 +868,7 @@ end function radiation_nextsw_cday
     use ppgrid
     use pspect
     use physconst,        only: cpair, stebol
-    use radconstants,     only: nlwbands,idx_sw_diag
+    use radconstants,     only: nlwbands,idx_sw_diag,nswbands
     use radsw,            only: rad_rrtmg_sw
     use radlw,            only: rad_rrtmg_lw
     use rad_constituents, only: rad_cnst_get_gas, rad_cnst_out, oldcldoptics, &
@@ -979,6 +985,7 @@ end function radiation_nextsw_cday
     real(r8) :: qrlc(pcols,pver)                  ! clearsky longwave  radiative heating rate 
 
     integer lchnk, ncol, lw
+    character(len=32) :: fieldname
     real(r8) :: calday                        ! current calendar day
     real(r8) :: clat(pcols)                   ! current latitudes(radians)
     real(r8) :: clon(pcols)                   ! current longitudes(radians)
@@ -1378,9 +1385,13 @@ end function radiation_nextsw_cday
                   call outfld('FSN200C'//diag(icall),fsn200c,pcols,lchnk)
                   call outfld('SWCF'//diag(icall),swcf  ,pcols,lchnk)
                   
-                  if (spectralflux) then ! Tried lowercase su. This failed during run. Now try upper case. If not, try adding to addfld.
-                     call outfld('SU'//diag(icall),su, pcols,lchnk) ! Might need to add pver, ftem, or both and the bands themselves. But might not. 
-                  end if 
+
+                  if (spectralflux) then
+                     do lw = 1, nswbands
+                        write(fieldname,'(a,i2.2)') 'SU_band', lw
+                        call outfld(trim(fieldname)//diag(icall), su(:,:,lw), pcols, lchnk)
+                     end do
+                  end if
                   
 
               end if ! (active_calls(icall))

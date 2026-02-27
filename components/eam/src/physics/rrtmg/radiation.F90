@@ -1399,7 +1399,7 @@ end function radiation_nextsw_cday
                      end do
                      do lw = 1, nswbands
                         write(fieldname,'(a,i2.2)') 'SD_band', lw
-                        call outfld(trim(fieldname)//diag(icall), su(:,:,lw), pcols, lchnk)
+                        call outfld(trim(fieldname)//diag(icall), sd(:,:,lw), pcols, lchnk)
                      end do
                   end if
                   
